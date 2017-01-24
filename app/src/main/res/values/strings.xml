@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">AlarmApplication</string>
+
+    <string name="repeat_Y">반복</string>
+    <string name="repeat_N">1회</string>
+
+    <string name="msg_add_new_alarm">Add a new Alarm!</string>
+
+
+
+
+
+
+
+
 </resources>

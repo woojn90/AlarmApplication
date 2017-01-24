@@ -1,28 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/activity_main"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
 
-    <FrameLayout
-        android:id="@+id/activity_main"
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="@dimen/activity_horizontal_margin"
-        tools:context="com.example.android.testsqlite.MainActivity">
+        android:gravity="center"
+        android:textSize="20sp"
+        android:text="@string/msg_add_new_alarm"/>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Add a new alarm!"/>
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_add"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@drawable/plus_button_image"
+        android:foregroundGravity="center"
+        android:layout_gravity="bottom|end" />
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/background_light">
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv_alarm_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-    </FrameLayout>
+    </ScrollView>
 
-</ScrollView>
+</FrameLayout>
+
+
 
