@@ -2,17 +2,16 @@ package com.example.android.alarmapplication;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.android.alarmapplication.data.AlarmContract;
-import com.example.android.alarmapplication.data.AlarmDbHelper;
 
 /**
  * Created by wjn on 2017-01-24.
@@ -23,9 +22,16 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
     private Cursor mCursor;
     private Context mContext;
 
-    public AlarmListAdapter(Context context, Cursor cursor) {
+    private final ItemClickListener mOnClickListener;
+
+    public AlarmListAdapter(Context context, Cursor cursor, ItemClickListener listener) {
         this.mContext = context;
         this.mCursor = cursor;
+        this.mOnClickListener = listener;
+    }
+
+    public interface ItemClickListener {
+        void onItemClick(long id, int viewId);
     }
 
     @Override
@@ -51,7 +57,7 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
         String enableYn = mCursor.getString(mCursor.getColumnIndex(AlarmContract.AlarmEntity.COLUMN_ENABLE_YN));
 
         long id = mCursor.getLong(mCursor.getColumnIndex(AlarmContract.AlarmEntity._ID));
-        holder.deleteImageButton.setTag(id);
+        holder.itemView.setTag(id);
 
         // 활성화 여부
         if ("Y".equals(enableYn)) {
@@ -75,44 +81,13 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
                     .replace("7","토"));
 
         } else {
-            holder.repeatTextView.setText(mContext.getString(R.string.repeat_Y));
+            holder.repeatTextView.setText(mContext.getString(R.string.repeat_N));
             holder.repeatDetailTextView.setText(date);
         }
 
         String meridian = hour >= 12 ? "AM" : "PM";
         holder.timeTextView.setText(meridian + " " + hour + ":" + minute);
         holder.memoTextView.setText(memo);
-
-
-        // Delete Alarm
-        holder.deleteImageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                long id = (long) v.getTag();
-                SQLiteDatabase db = new AlarmDbHelper(mContext).getWritableDatabase();
-                // alert 추가할 것
-                db.delete(AlarmContract.AlarmEntity.TABLE_NAME, AlarmContract.AlarmEntity._ID + "=" + id, null);
-            }
-        });
-
-        // Enable Alarm
-        holder.alarmOnImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                v.setVisibility(View.GONE);
-                holder.alarmOffImageView.setVisibility(View.VISIBLE);
-                // db 처리 필요
-            }
-        });
-        holder.alarmOffImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                v.setVisibility(View.GONE);
-                holder.alarmOnImageView.setVisibility(View.VISIBLE);
-                // db 처리 필요
-            }
-        });
-
     }
 
 
@@ -129,7 +104,7 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
         }
     }
 
-    class AlarmViewHolder extends RecyclerView.ViewHolder {
+    class AlarmViewHolder extends RecyclerView.ViewHolder implements OnClickListener {
 
         private final ImageView alarmOnImageView;
         private final ImageView alarmOffImageView;
@@ -141,6 +116,7 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
 
         public AlarmViewHolder(final View itemView) {
             super(itemView);
+
             repeatTextView = (TextView) itemView.findViewById(R.id.tv_repeat);
             repeatDetailTextView = (TextView) itemView.findViewById(R.id.tv_repeat_detail);
             timeTextView = (TextView) itemView.findViewById(R.id.tv_time);
@@ -148,8 +124,34 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
             deleteImageButton = (ImageButton) itemView.findViewById(R.id.ib_delete);
             alarmOnImageView = (ImageView) itemView.findViewById(R.id.iv_alarm_on);
             alarmOffImageView = (ImageView) itemView.findViewById(R.id.iv_alarm_off);
+
+            itemView.setOnClickListener(this);
+            deleteImageButton.setOnClickListener(this);
+            alarmOnImageView.setOnClickListener(this);
+            alarmOffImageView.setOnClickListener(this);
         }
 
+        @Override
+        public void onClick(View v) {
+            long id = (long) itemView.getTag();
+            int viewId = v.getId();
+
+            // Main에서 db처리를 위해 id(DB)와 view ID 전달
+            mOnClickListener.onItemClick(id, viewId);
+
+            // 알람 활성화 버튼을 누를 경우 On,Off 이미지를 교체
+            switch (viewId) {
+                case R.id.iv_alarm_on:
+                    alarmOnImageView.setVisibility(View.GONE);
+                    alarmOffImageView.setVisibility(View.VISIBLE);
+                    break;
+
+                case R.id.iv_alarm_off:
+                    alarmOffImageView.setVisibility(View.GONE);
+                    alarmOnImageView.setVisibility(View.VISIBLE);
+                    break;
+            }
+        }
     }
 
 }
