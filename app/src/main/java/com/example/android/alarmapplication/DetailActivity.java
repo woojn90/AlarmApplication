@@ -1,6 +1,8 @@
 package com.example.android.alarmapplication;
 
+import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,14 +20,21 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.example.android.alarmapplication.Util.AlarmUtility;
 import com.example.android.alarmapplication.data.AlarmContract;
+
+import java.util.Calendar;
+
+import static com.example.android.alarmapplication.Util.AlarmUtility.*;
 
 /**
  * Created by wjn on 2017-01-27.
  */
 
 public class DetailActivity extends AppCompatActivity {
+
+    private static final int ACTIVITY_POPUP_REQUEST_CODE = 1;
+
+    public static final int ACTIVITY_SAVE_RESULT_CODE = 1;
 
     private final static int TAB_REPEAT_Y_INDEX = 0;
     private final static int TAB_REPEAT_N_INDEX = 1;
@@ -50,12 +59,12 @@ public class DetailActivity extends AppCompatActivity {
     private ImageButton calendarImageButton;
     private TextView dateTextView;
     private Button saveButton;
-    private Button cancelButton;
 
+    private Button cancelButton;
     private Toast mToast;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 
@@ -104,26 +113,21 @@ public class DetailActivity extends AppCompatActivity {
             setTitle(R.string.action_detail_insert);
 
             mContentValues = new ContentValues();
+            initializeInsertAlarm();
         }
         else {
             Log.d("Debug", "DetailActivity : 수정 (id = " + id + ")");
             setTitle(R.string.action_detail_update);
 
             mContentValues = (ContentValues) getIntent().getExtras().get("ContentValue");
-
-            for (String key : mContentValues.keySet()) {
-                Log.d("Debug", "DetailActivity : key = " + key +
-                        ", value = " + mContentValues.getAsString(key));
-            }
             initializeUpdateAlarm();
         }
 
         calendarImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-
-                // TODO tag에 String date 로 저장해야함
+                Intent popupIntent = new Intent(DetailActivity.this, PopupActivity.class);
+                startActivityForResult(popupIntent, ACTIVITY_POPUP_REQUEST_CODE);
             }
         });
 
@@ -131,15 +135,27 @@ public class DetailActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (validateData()) {
-                    // TODO alert 추가 (확인창)
-                    save();
+                    new AlertDialog.Builder(DetailActivity.this)
+                            .setTitle(R.string.string_info)
+                            .setMessage(R.string.msg_info_save)
+                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                }
+                            })
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    save();
 
-                    Intent result = new Intent();
-                    result.putExtra("id", id); // 0이면 insert
-                    result.putExtra("ContentValue", mContentValues);
-                    setResult(0, result);
+                                    Intent result = new Intent();
+                                    result.putExtra("id", id); // 0이면 insert
+                                    result.putExtra("ContentValue", mContentValues);
+                                    setResult(ACTIVITY_SAVE_RESULT_CODE, result);
 
-                    finish();
+                                    finish();
+                                }
+                            }).show();
                 }
             }
         });
@@ -147,10 +163,41 @@ public class DetailActivity extends AppCompatActivity {
         cancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO alert 추가
                 finish();
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // finish 일 경우만 적용
+        if (resultCode == PopupActivity.ACTIVITY_FINISH_RESULT_CODE) {
+            String date = data.getStringExtra("date");
+
+            Log.d("Debug", "DetailActivity : date = " + date);
+
+            switch (requestCode) {
+                case ACTIVITY_POPUP_REQUEST_CODE:
+                    dateTextView.setText(date + getWeekDayFromDate(date));
+                    dateTextView.setTag(date);
+                    break;
+            }
+        }
+    }
+
+    // Insert 일 경우 현재 시간, 날짜로 적용
+    private void initializeInsertAlarm() {
+        Calendar calendar = Calendar.getInstance();
+
+        // setHour, setMinute은 API 23 Level 이상부터 가능
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            timePicker.setHour(calendar.get(Calendar.HOUR_OF_DAY));
+            timePicker.setMinute(calendar.get(Calendar.MINUTE));
+        } else {
+            timePicker.setCurrentHour(calendar.get(Calendar.HOUR_OF_DAY));
+            timePicker.setCurrentMinute(calendar.get(Calendar.MINUTE));
+        }
+        initializeCurrentDate();
     }
 
     // Update 일 경우 기존 설정값을 UI에 적용
@@ -185,14 +232,27 @@ public class DetailActivity extends AppCompatActivity {
             if (sequenceNumOfDayOfWeek.contains("5")) thdToggleButton.setChecked(true);
             if (sequenceNumOfDayOfWeek.contains("6")) friToggleButton.setChecked(true);
             if (sequenceNumOfDayOfWeek.contains("7")) satToggleButton.setChecked(true);
+
+            initializeCurrentDate();
         }
         // 1회일 경우
         else {
             tabHost.setCurrentTab(TAB_REPEAT_N_INDEX);
             String date = mContentValues.getAsString(AlarmContract.AlarmEntity.COLUMN_SELECTED_DATE);
-            dateTextView.setText(date + AlarmUtility.getWeekDayFromDate(date));
+            dateTextView.setText(date + getWeekDayFromDate(date));
             dateTextView.setTag(date);
         }
+    }
+
+    private void initializeCurrentDate() {
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
+        int day = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
+
+        String date = getDateFromYearMonthDay(year, month, day);
+
+        dateTextView.setText(date + getWeekDayFromDate(date));
+        dateTextView.setTag(date);
     }
 
     // 가능한 data 인지 확인
@@ -215,6 +275,9 @@ public class DetailActivity extends AppCompatActivity {
         // 1회일 경우
         else {
             // TODO 현재보다 이후 인지 확인 (time, date 전부 고려)
+            if (dateTextView.getTag() == null) {
+                return false;
+            }
 
         }
 

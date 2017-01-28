@@ -1,6 +1,11 @@
 package com.example.android.alarmapplication;
 
+import android.app.AlarmManager;
+import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -18,14 +23,19 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.android.alarmapplication.Receiver.AlarmReceiver;
 import com.example.android.alarmapplication.data.AlarmContract;
 import com.example.android.alarmapplication.data.AlarmDbHelper;
+
+import java.util.Calendar;
+
+import static com.example.android.alarmapplication.Util.AlarmUtility.setAlarmBySdkVersion;
 
 public class MainActivity extends AppCompatActivity
         implements AlarmListAdapter.ItemClickListener {
 
-    private static final int ACTIVITY_INSERT_REQUEST_CODE = 0;
-    private static final int ACTIVITY_UPDATE_REQUEST_CODE = 1;
+    private static final int ACTIVITY_INSERT_REQUEST_CODE = 1;
+    private static final int ACTIVITY_UPDATE_REQUEST_CODE = 2;
 
     private AlarmListAdapter mAdapter;
     private SQLiteDatabase mDb;
@@ -35,6 +45,8 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView alarmRecyclerView;
 
     private Toast mToast;
+
+    private AlarmManager manager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +65,9 @@ public class MainActivity extends AppCompatActivity
         Cursor cursor = getAllAlarms();
         mAdapter = new AlarmListAdapter(this, cursor, this);
         alarmRecyclerView.setAdapter(mAdapter);
+
+        // AlarmManager 설정
+        manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
         // insert Alarm
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_insert);
@@ -96,7 +111,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onItemClick(long id, int viewId) {
+    public void onItemClick(final long id, int viewId) {
         ContentValues cv;
 
         Log.d("Debug", "MainActivity : id : " + id + ", viewId : " + viewId);
@@ -112,24 +127,42 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case R.id.ib_delete:
-                //TODO 삭제 alert 추가
-                mDb.delete(AlarmContract.AlarmEntity.TABLE_NAME, AlarmContract.AlarmEntity._ID + "=" + id, null);
-                makeToastMsg(getString(R.string.msg_alarm_delete));
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle(R.string.string_info)
+                        .setMessage(getString(R.string.msg_info_delete))
+                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        })
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                mDb.delete(AlarmContract.AlarmEntity.TABLE_NAME, AlarmContract.AlarmEntity._ID + "=" + id, null);
+                                makeToastMsg(getString(R.string.msg_alarm_delete));
+                                deleteAlarm(id);
+
+                                // 변경 내용 UI 적용
+                                mAdapter.swapCursor(getAllAlarms());
+                            }
+                        }).show();
                 break;
 
             case R.id.iv_alarm_on:
-                cv = new ContentValues();
+                cv = getContentValuesById(id);
                 cv.put(AlarmContract.AlarmEntity.COLUMN_ENABLE_YN, "N");
                 mDb.update(
                         AlarmContract.AlarmEntity.TABLE_NAME, cv, AlarmContract.AlarmEntity._ID + "=" + id, null);
+                insertOrUpdateAlarm(id, cv);
                 makeToastMsg(getString(R.string.msg_alarm_off));
                 break;
 
             case R.id.iv_alarm_off:
-                cv = new ContentValues();
+                cv = getContentValuesById(id);
                 cv.put(AlarmContract.AlarmEntity.COLUMN_ENABLE_YN, "Y");
                 mDb.update(
                         AlarmContract.AlarmEntity.TABLE_NAME, cv, AlarmContract.AlarmEntity._ID + "=" + id, null);
+                insertOrUpdateAlarm(id, cv);
                 makeToastMsg(getString(R.string.msg_alarm_on));
                 break;
         }
@@ -140,8 +173,8 @@ public class MainActivity extends AppCompatActivity
     // 상세 화면에서 변경된 내용 DB 저장
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // cancel 일 경우 적용 안되게
-        if (data != null) {
+        // save 일 경우만 적용
+        if (resultCode == DetailActivity.ACTIVITY_SAVE_RESULT_CODE) {
             long id = data.getLongExtra("id", 0);
             ContentValues cv = (ContentValues) data.getExtras().get("ContentValue");
             Log.d("Debug", "MainActivity : id = " + id);
@@ -150,11 +183,13 @@ public class MainActivity extends AppCompatActivity
             switch (requestCode) {
                 case ACTIVITY_INSERT_REQUEST_CODE:
                     mDb.insert(AlarmContract.AlarmEntity.TABLE_NAME, null, cv);
+                    insertOrUpdateAlarm(id, cv);
                     makeToastMsg(getString(R.string.msg_alarm_insert));
                     break;
                 case ACTIVITY_UPDATE_REQUEST_CODE:
                     mDb.update(
                             AlarmContract.AlarmEntity.TABLE_NAME, cv, AlarmContract.AlarmEntity._ID + "=" + id, null);
+                    insertOrUpdateAlarm(id, cv);
                     makeToastMsg(getString(R.string.msg_alarm_update));
                     break;
             }
@@ -186,5 +221,79 @@ public class MainActivity extends AppCompatActivity
         return cv;
     }
 
+    private long getNewRowId() {
+        final String MAX_ROW_ALIAS = "NEW_ID";
 
+        String[] maxCol = {"MAX(" + AlarmContract.AlarmEntity._ID + ") AS " + MAX_ROW_ALIAS};
+
+        Cursor cursorNewRowId = mDb.query(
+                AlarmContract.AlarmEntity.TABLE_NAME,
+                maxCol,
+                null,
+                null,
+                null,
+                null,
+                null);
+
+        long newRowId = 0;
+
+        if (cursorNewRowId != null && cursorNewRowId.getCount() != 0) {
+            if (cursorNewRowId.moveToFirst()) {
+                newRowId = cursorNewRowId.getLong(cursorNewRowId.getColumnIndex(MAX_ROW_ALIAS));
+            }
+        }
+        Log.d("Debug", "MainActivity : newRowId = " + newRowId);
+        return newRowId;
+    }
+
+    private void insertOrUpdateAlarm(long id, ContentValues cv) {
+        // insert 일 경우
+        if (id == 0) {
+            id = getNewRowId();
+        }
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        intent.putExtra("id", id);
+        intent.putExtra("ContentValue", cv);
+
+        Calendar calendar = Calendar.getInstance();
+
+        int hour = cv.getAsInteger(AlarmContract.AlarmEntity.COLUMN_SELECTED_HOUR);
+        int minute = cv.getAsInteger(AlarmContract.AlarmEntity.COLUMN_SELECTED_MINUTE);
+        int year;
+        int month;
+        int day;
+
+        // 반복일 경우
+        if ("Y".equals(cv.getAsString(AlarmContract.AlarmEntity.COLUMN_REPEAT_YN))) {
+            year = calendar.get(Calendar.YEAR);
+            month = calendar.get(Calendar.MONTH);
+            day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            calendar.set(year, month, day, hour, minute, 0);
+
+            // 현재보다 과거일 경우 다음날로 세팅
+            if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+                calendar.add(Calendar.DAY_OF_YEAR, 1);
+            }
+        }
+        // 1회일 경우
+        else {
+            String[] dates = cv.getAsString(AlarmContract.AlarmEntity.COLUMN_SELECTED_DATE).split("/");
+            year = Integer.parseInt(dates[0]);
+            month = Integer.parseInt(dates[1]) - 1;
+            day = Integer.parseInt(dates[2]);
+
+            calendar.set(year, month, day, hour, minute, 0);
+        }
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, (int)id, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        setAlarmBySdkVersion(manager, calendar.getTimeInMillis(), pendingIntent);
+    }
+
+    private void deleteAlarm(long id) {
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, (int)id, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        manager.cancel(pendingIntent);
+        pendingIntent.cancel();
+    }
 }

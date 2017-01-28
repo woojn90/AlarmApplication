@@ -2,6 +2,7 @@ package com.example.android.alarmapplication;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Build;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,10 +10,12 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.example.android.alarmapplication.Util.AlarmUtility;
 import com.example.android.alarmapplication.data.AlarmContract;
+
+import static com.example.android.alarmapplication.Util.AlarmUtility.*;
 
 /**
  * Created by wjn on 2017-01-24.
@@ -71,23 +74,54 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
         // 반복 여부
         if ("Y".equals(repeatYn)) {
             holder.repeatTextView.setText(mContext.getString(R.string.string_repeat_Y));
-            holder.repeatDetailTextView.setText(dayOfWeek
-                    .replace("1","일")
-                    .replace("2","월")
-                    .replace("3","화")
-                    .replace("4","수")
-                    .replace("5","목")
-                    .replace("6","금")
-                    .replace("7","토"));
+
+            holder.repeatDateTextView.setVisibility(View.GONE);
+            holder.repeatWeekDayLayout.setVisibility(View.VISIBLE);
+
+            // 요일 UI
+            // Context.getColor()는 API 23 Level 이상부터 가능
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (dayOfWeek.contains("1"))
+                    holder.repeatSunTextView.setTextColor(mContext.getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("2"))
+                    holder.repeatMonTextView.setTextColor(mContext.getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("3"))
+                    holder.repeatTueTextView.setTextColor(mContext.getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("4"))
+                    holder.repeatWedTextView.setTextColor(mContext.getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("5"))
+                    holder.repeatThdTextView.setTextColor(mContext.getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("6"))
+                    holder.repeatFriTextView.setTextColor(mContext.getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("7"))
+                    holder.repeatSatTextView.setTextColor(mContext.getColor(R.color.colorEnable));
+            } else {
+                if (dayOfWeek.contains("1"))
+                    holder.repeatSunTextView.setTextColor(mContext.getResources().getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("2"))
+                    holder.repeatMonTextView.setTextColor(mContext.getResources().getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("3"))
+                    holder.repeatTueTextView.setTextColor(mContext.getResources().getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("4"))
+                    holder.repeatWedTextView.setTextColor(mContext.getResources().getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("5"))
+                    holder.repeatThdTextView.setTextColor(mContext.getResources().getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("6"))
+                    holder.repeatFriTextView.setTextColor(mContext.getResources().getColor(R.color.colorEnable));
+                if (dayOfWeek.contains("7"))
+                    holder.repeatSatTextView.setTextColor(mContext.getResources().getColor(R.color.colorEnable));
+            }
 
         } else {
             holder.repeatTextView.setText(mContext.getString(R.string.string_repeat_N));
-            holder.repeatDetailTextView.setText(date + AlarmUtility.getWeekDayFromDate(date));
+
+            holder.repeatWeekDayLayout.setVisibility(View.GONE);
+            holder.repeatDateTextView.setVisibility(View.VISIBLE);
+
+            holder.repeatDateTextView.setText(date + getWeekDayFromDate(date));
         }
 
-        String meridian = hour >= 12 ? "AM" : "PM";
-        holder.timeTextView.setText(meridian + " " + String.format("%02d", hour)
-                + ":" + String.format("%02d",minute));
+        holder.timeTextView.setText(getTimeFromHourMinute(hour, minute));
         holder.memoTextView.setText(memo);
     }
 
@@ -110,7 +144,15 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
         private final ImageView alarmOnImageView;
         private final ImageView alarmOffImageView;
         private final TextView repeatTextView;
-        private final TextView repeatDetailTextView;
+        private final TextView repeatSunTextView;
+        private final TextView repeatMonTextView;
+        private final TextView repeatTueTextView;
+        private final TextView repeatWedTextView;
+        private final TextView repeatThdTextView;
+        private final TextView repeatFriTextView;
+        private final TextView repeatSatTextView;
+        private final TextView repeatDateTextView;
+        private final LinearLayout repeatWeekDayLayout;
         private final TextView timeTextView;
         private final TextView memoTextView;
         private final ImageButton deleteImageButton;
@@ -119,7 +161,15 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
             super(itemView);
 
             repeatTextView = (TextView) itemView.findViewById(R.id.tv_repeat);
-            repeatDetailTextView = (TextView) itemView.findViewById(R.id.tv_repeat_detail);
+            repeatSunTextView = (TextView) itemView.findViewById(R.id.tv_repeat_sun);
+            repeatMonTextView = (TextView) itemView.findViewById(R.id.tv_repeat_mon);
+            repeatTueTextView = (TextView) itemView.findViewById(R.id.tv_repeat_tue);
+            repeatWedTextView = (TextView) itemView.findViewById(R.id.tv_repeat_wed);
+            repeatThdTextView = (TextView) itemView.findViewById(R.id.tv_repeat_thd);
+            repeatFriTextView = (TextView) itemView.findViewById(R.id.tv_repeat_fri);
+            repeatSatTextView = (TextView) itemView.findViewById(R.id.tv_repeat_sat);
+            repeatDateTextView = (TextView) itemView.findViewById(R.id.tv_repeat_date);
+            repeatWeekDayLayout = (LinearLayout) itemView.findViewById(R.id.layout_repeat_week_day);
             timeTextView = (TextView) itemView.findViewById(R.id.tv_time);
             memoTextView = (TextView) itemView.findViewById(R.id.tv_memo);
             deleteImageButton = (ImageButton) itemView.findViewById(R.id.ib_delete);

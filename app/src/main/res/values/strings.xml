@@ -1,11 +1,14 @@
 <resources>
     <string name="app_name">Alarm</string>
 
+    <!-- ActionBar -->
     <string name="action_main">알람</string>
     <string name="action_detail_insert">알람 추가</string>
     <string name="action_detail_update">알람 수정</string>
     <string name="action_setting">설정</string>
 
+
+    <!-- UI -->
     <string name="string_repeat_Y">반복</string>
     <string name="string_repeat_N">1회</string>
     <string name="string_detail_memo">메모</string>
@@ -13,12 +16,25 @@
     <string name="string_detail_way">방식</string>
     <string name="string_detail_sound">소리</string>
     <string name="string_detail_vibrate">진동</string>
+    <string name="string_sun_short">일</string>
+    <string name="string_mon_short">월</string>
+    <string name="string_tue_short">화</string>
+    <string name="string_wed_short">수</string>
+    <string name="string_thd_short">목</string>
+    <string name="string_fri_short">금</string>
+    <string name="string_sat_short">토</string>
     <string name="string_detail_day_of_week">요일 선택</string>
     <string name="string_detail_date">날짜 선택</string>
     <string name="string_detail_save">저장</string>
     <string name="string_detail_cancel">취소</string>
+    <string name="string_detail_finish">완료</string>
+    <string name="string_alarm_cancel">알람 해제</string>
 
+    <string name="msg_memo_hint">memo here</string>
     <string name="msg_add_new_alarm">새로운 알람을 추가하세요!</string>
+
+
+    <!-- Toast -->
     <string name="msg_alarm_on">선택한 알람이 활성화 됩니다.</string>
     <string name="msg_alarm_off">선택한 알람이 비활성화 됩니다.</string>
 
@@ -29,5 +45,12 @@
     <string name="msg_valid_way">알람 방식을 1가지 이상 선택하세요.</string>
     <string name="msg_valid_week_day">알람을 반복할 요일을 1가지 이상 선택하세요.</string>
 
+
+    <!-- AlertDialog -->
+    <string name="string_info">알림</string>
+
+    <string name="msg_info_cancel">취소하시겠습니까?</string>
+    <string name="msg_info_save">저장하시겠습니까?</string>
+    <string name="msg_info_delete">삭제하시겠습니까?</string>
 
 </resources>
