@@ -3,6 +3,7 @@
     package="com.example.android.alarmapplication">
 
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
         android:allowBackup="true"
@@ -39,18 +40,19 @@
         <activity android:name=".AlarmActivity">
         </activity>
 
-        <receiver android:name=".Receiver.AlarmReceiver">
+        <receiver android:name=".receiver.AlarmReceiver">
+        </receiver>
+
+        <receiver android:name=".receiver.DeviceBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".Receiver.DeviceBootReceiver"
-            android:enabled="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
+        <provider
+            android:authorities="com.example.android.alarmapplication"
+            android:name=".provider.AlarmProvider"
+            android:exported="true"/>
     </application>
 
 </manifest>

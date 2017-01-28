@@ -1,8 +1,14 @@
-package com.example.android.alarmapplication.Util;
+package com.example.android.alarmapplication.util;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
+
+import com.example.android.alarmapplication.receiver.AlarmReceiver;
+import com.example.android.alarmapplication.data.AlarmContract;
 
 import java.sql.Date;
 import java.util.Calendar;
@@ -50,6 +56,53 @@ public class AlarmUtility {
         else {
             manager.set(AlarmManager.RTC_WAKEUP, time, pendingIntent);
         }
+    }
+
+    public static void setAlarmService(Context context, AlarmManager manager, long id, ContentValues cv) {
+
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        intent.putExtra("id", id);
+        intent.putExtra("ContentValue", cv);
+
+        Calendar calendar = Calendar.getInstance();
+
+        int hour = cv.getAsInteger(AlarmContract.AlarmEntity.COLUMN_SELECTED_HOUR);
+        int minute = cv.getAsInteger(AlarmContract.AlarmEntity.COLUMN_SELECTED_MINUTE);
+        int year;
+        int month;
+        int day;
+
+        // 반복일 경우
+        if ("Y".equals(cv.getAsString(AlarmContract.AlarmEntity.COLUMN_REPEAT_YN))) {
+            year = calendar.get(Calendar.YEAR);
+            month = calendar.get(Calendar.MONTH);
+            day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            calendar.set(year, month, day, hour, minute, 0);
+
+            // 현재보다 과거일 경우 다음날로 세팅
+            if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+                calendar.add(Calendar.DAY_OF_YEAR, 1);
+            }
+        }
+        // 1회일 경우
+        else {
+            String[] dates = cv.getAsString(AlarmContract.AlarmEntity.COLUMN_SELECTED_DATE).split("/");
+            year = Integer.parseInt(dates[0]);
+            month = Integer.parseInt(dates[1]) - 1;
+            day = Integer.parseInt(dates[2]);
+
+            calendar.set(year, month, day, hour, minute, 0);
+
+            // 현재보다 과거일 경우 세팅하지 않음 (BOOT_COMPLETED 용)
+            // 일반적인 추가, 수정의 경우 UI에서 Validation check를 하기 때문에 영향이 없는 부분임
+            if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+                return;
+            }
+        }
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, (int)id, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        setAlarmBySdkVersion(manager, calendar.getTimeInMillis(), pendingIntent);
     }
 
 }

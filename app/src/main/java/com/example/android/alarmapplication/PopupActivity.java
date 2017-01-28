@@ -5,10 +5,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.DatePicker;
 
-import com.example.android.alarmapplication.Util.AlarmUtility;
+import com.example.android.alarmapplication.util.AlarmUtility;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * Created by wjn on 2017-01-28.
@@ -18,42 +21,30 @@ public class PopupActivity extends Activity {
 
     public static final int ACTIVITY_FINISH_RESULT_CODE = 1;
 
-    private DatePicker datePicker;
-    private Button cancelButton;
-    private Button finishButton;
+    @BindView(R.id.dp_date)
+    DatePicker datePicker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_popup);
+        ButterKnife.bind(this);
+    }
 
-        datePicker = (DatePicker) findViewById(R.id.dp_date);
-        cancelButton = (Button) findViewById(R.id.btn_cancel);
-        finishButton = (Button) findViewById(R.id.btn_finish);
+    @OnClick({R.id.btn_finish, R.id.btn_cancel})
+    public void onClick(View v) {
+        if (v.getId() == R.id.btn_finish) {
+            int year = datePicker.getYear();
+            int month = datePicker.getMonth() + 1;
+            int day = datePicker.getDayOfMonth();
 
-        finishButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int year = datePicker.getYear();
-                int month = datePicker.getMonth() + 1;
-                int day = datePicker.getDayOfMonth();
+            String date = AlarmUtility.getDateFromYearMonthDay(year, month, day);
 
-                String date = AlarmUtility.getDateFromYearMonthDay(year, month, day);
-
-                Intent result = new Intent();
-                result.putExtra("date", date);
-                setResult(ACTIVITY_FINISH_RESULT_CODE, result);
-
-                finish();
-            }
-        });
-
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+            Intent result = new Intent();
+            result.putExtra("date", date);
+            setResult(ACTIVITY_FINISH_RESULT_CODE, result);
+        }
+        finish();
     }
 }

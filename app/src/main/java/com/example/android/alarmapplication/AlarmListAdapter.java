@@ -15,7 +15,11 @@ import android.widget.TextView;
 
 import com.example.android.alarmapplication.data.AlarmContract;
 
-import static com.example.android.alarmapplication.Util.AlarmUtility.*;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+import static com.example.android.alarmapplication.util.AlarmUtility.*;
 
 /**
  * Created by wjn on 2017-01-24.
@@ -141,48 +145,45 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
 
     class AlarmViewHolder extends RecyclerView.ViewHolder implements OnClickListener {
 
-        private final ImageView alarmOnImageView;
-        private final ImageView alarmOffImageView;
-        private final TextView repeatTextView;
-        private final TextView repeatSunTextView;
-        private final TextView repeatMonTextView;
-        private final TextView repeatTueTextView;
-        private final TextView repeatWedTextView;
-        private final TextView repeatThdTextView;
-        private final TextView repeatFriTextView;
-        private final TextView repeatSatTextView;
-        private final TextView repeatDateTextView;
-        private final LinearLayout repeatWeekDayLayout;
-        private final TextView timeTextView;
-        private final TextView memoTextView;
-        private final ImageButton deleteImageButton;
+        @BindView(R.id.iv_alarm_on)
+        ImageView alarmOnImageView;
+        @BindView(R.id.iv_alarm_off)
+        ImageView alarmOffImageView;
+        @BindView(R.id.tv_repeat)
+        TextView repeatTextView;
+        @BindView(R.id.tv_repeat_sun)
+        TextView repeatSunTextView;
+        @BindView(R.id.tv_repeat_mon)
+        TextView repeatMonTextView;
+        @BindView(R.id.tv_repeat_tue)
+        TextView repeatTueTextView;
+        @BindView(R.id.tv_repeat_wed)
+        TextView repeatWedTextView;
+        @BindView(R.id.tv_repeat_thd)
+        TextView repeatThdTextView;
+        @BindView(R.id.tv_repeat_fri)
+        TextView repeatFriTextView;
+        @BindView(R.id.tv_repeat_sat)
+        TextView repeatSatTextView;
+        @BindView(R.id.tv_repeat_date)
+        TextView repeatDateTextView;
+        @BindView(R.id.layout_repeat_week_day)
+        LinearLayout repeatWeekDayLayout;
+        @BindView(R.id.tv_time)
+        TextView timeTextView;
+        @BindView(R.id.tv_memo)
+        TextView memoTextView;
+        @BindView(R.id.ib_delete)
+        ImageButton deleteImageButton;
 
         public AlarmViewHolder(final View itemView) {
             super(itemView);
-
-            repeatTextView = (TextView) itemView.findViewById(R.id.tv_repeat);
-            repeatSunTextView = (TextView) itemView.findViewById(R.id.tv_repeat_sun);
-            repeatMonTextView = (TextView) itemView.findViewById(R.id.tv_repeat_mon);
-            repeatTueTextView = (TextView) itemView.findViewById(R.id.tv_repeat_tue);
-            repeatWedTextView = (TextView) itemView.findViewById(R.id.tv_repeat_wed);
-            repeatThdTextView = (TextView) itemView.findViewById(R.id.tv_repeat_thd);
-            repeatFriTextView = (TextView) itemView.findViewById(R.id.tv_repeat_fri);
-            repeatSatTextView = (TextView) itemView.findViewById(R.id.tv_repeat_sat);
-            repeatDateTextView = (TextView) itemView.findViewById(R.id.tv_repeat_date);
-            repeatWeekDayLayout = (LinearLayout) itemView.findViewById(R.id.layout_repeat_week_day);
-            timeTextView = (TextView) itemView.findViewById(R.id.tv_time);
-            memoTextView = (TextView) itemView.findViewById(R.id.tv_memo);
-            deleteImageButton = (ImageButton) itemView.findViewById(R.id.ib_delete);
-            alarmOnImageView = (ImageView) itemView.findViewById(R.id.iv_alarm_on);
-            alarmOffImageView = (ImageView) itemView.findViewById(R.id.iv_alarm_off);
+            ButterKnife.bind(this, itemView);
 
             itemView.setOnClickListener(this);
-            deleteImageButton.setOnClickListener(this);
-            alarmOnImageView.setOnClickListener(this);
-            alarmOffImageView.setOnClickListener(this);
         }
 
-        @Override
+        @OnClick({R.id.ib_delete, R.id.iv_alarm_on, R.id.iv_alarm_off})
         public void onClick(View v) {
             long id = (long) itemView.getTag();
             int viewId = v.getId();
@@ -191,7 +192,7 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
             mOnClickListener.onItemClick(id, viewId);
 
             // 알람 활성화 버튼을 누를 경우 On,Off 이미지를 교체
-            switch (viewId) {
+            switch (v.getId()) {
                 case R.id.iv_alarm_on:
                     alarmOnImageView.setVisibility(View.GONE);
                     alarmOffImageView.setVisibility(View.VISIBLE);

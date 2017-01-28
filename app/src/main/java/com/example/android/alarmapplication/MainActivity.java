@@ -11,7 +11,6 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,13 +22,15 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.android.alarmapplication.Receiver.AlarmReceiver;
+import com.example.android.alarmapplication.receiver.AlarmReceiver;
 import com.example.android.alarmapplication.data.AlarmContract;
 import com.example.android.alarmapplication.data.AlarmDbHelper;
 
-import java.util.Calendar;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
-import static com.example.android.alarmapplication.Util.AlarmUtility.setAlarmBySdkVersion;
+import static com.example.android.alarmapplication.util.AlarmUtility.setAlarmService;
 
 public class MainActivity extends AppCompatActivity
         implements AlarmListAdapter.ItemClickListener {
@@ -37,25 +38,23 @@ public class MainActivity extends AppCompatActivity
     private static final int ACTIVITY_INSERT_REQUEST_CODE = 1;
     private static final int ACTIVITY_UPDATE_REQUEST_CODE = 2;
 
+    @BindView(R.id.tv_alarm_empty)
+    TextView emptyTextView;
+    @BindView(R.id.rv_alarm_list)
+    RecyclerView alarmRecyclerView;
+
     private AlarmListAdapter mAdapter;
     private SQLiteDatabase mDb;
-
-    //TODO ButterKnife Library 적용
-    private TextView emptyTextView;
-    private RecyclerView alarmRecyclerView;
-
-    private Toast mToast;
-
     private AlarmManager manager;
+    private Toast mToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
         // View 설정
-        emptyTextView = (TextView) findViewById(R.id.tv_alarm_empty);
-        alarmRecyclerView = (RecyclerView) findViewById(R.id.rv_alarm_list);
         alarmRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // DB 설정
@@ -68,16 +67,13 @@ public class MainActivity extends AppCompatActivity
 
         // AlarmManager 설정
         manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+    }
 
-        // insert Alarm
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_insert);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent insertIntent = new Intent(MainActivity.this, DetailActivity.class);
-                startActivityForResult(insertIntent, ACTIVITY_INSERT_REQUEST_CODE);
-            }
-        });
+    // insert Alarm (상세 화면)
+    @OnClick(R.id.fab_insert)
+    public void onClick(View v) {
+        Intent insertIntent = new Intent(MainActivity.this, DetailActivity.class);
+        startActivityForResult(insertIntent, ACTIVITY_INSERT_REQUEST_CODE);
     }
 
     private Cursor getAllAlarms() {
@@ -153,7 +149,7 @@ public class MainActivity extends AppCompatActivity
                 cv.put(AlarmContract.AlarmEntity.COLUMN_ENABLE_YN, "N");
                 mDb.update(
                         AlarmContract.AlarmEntity.TABLE_NAME, cv, AlarmContract.AlarmEntity._ID + "=" + id, null);
-                insertOrUpdateAlarm(id, cv);
+                deleteAlarm(id);
                 makeToastMsg(getString(R.string.msg_alarm_off));
                 break;
 
@@ -251,43 +247,7 @@ public class MainActivity extends AppCompatActivity
         if (id == 0) {
             id = getNewRowId();
         }
-        Intent intent = new Intent(this, AlarmReceiver.class);
-        intent.putExtra("id", id);
-        intent.putExtra("ContentValue", cv);
-
-        Calendar calendar = Calendar.getInstance();
-
-        int hour = cv.getAsInteger(AlarmContract.AlarmEntity.COLUMN_SELECTED_HOUR);
-        int minute = cv.getAsInteger(AlarmContract.AlarmEntity.COLUMN_SELECTED_MINUTE);
-        int year;
-        int month;
-        int day;
-
-        // 반복일 경우
-        if ("Y".equals(cv.getAsString(AlarmContract.AlarmEntity.COLUMN_REPEAT_YN))) {
-            year = calendar.get(Calendar.YEAR);
-            month = calendar.get(Calendar.MONTH);
-            day = calendar.get(Calendar.DAY_OF_MONTH);
-
-            calendar.set(year, month, day, hour, minute, 0);
-
-            // 현재보다 과거일 경우 다음날로 세팅
-            if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
-                calendar.add(Calendar.DAY_OF_YEAR, 1);
-            }
-        }
-        // 1회일 경우
-        else {
-            String[] dates = cv.getAsString(AlarmContract.AlarmEntity.COLUMN_SELECTED_DATE).split("/");
-            year = Integer.parseInt(dates[0]);
-            month = Integer.parseInt(dates[1]) - 1;
-            day = Integer.parseInt(dates[2]);
-
-            calendar.set(year, month, day, hour, minute, 0);
-        }
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, (int)id, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        setAlarmBySdkVersion(manager, calendar.getTimeInMillis(), pendingIntent);
+        setAlarmService(this, manager, id, cv);
     }
 
     private void deleteAlarm(long id) {

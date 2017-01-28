@@ -1,4 +1,4 @@
-package com.example.android.alarmapplication.Receiver;
+package com.example.android.alarmapplication.receiver;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -13,7 +13,7 @@ import com.example.android.alarmapplication.data.AlarmContract;
 
 import java.util.Calendar;
 
-import static com.example.android.alarmapplication.Util.AlarmUtility.setAlarmBySdkVersion;
+import static com.example.android.alarmapplication.util.AlarmUtility.setAlarmBySdkVersion;
 
 /**
  * Created by wjn on 2017-01-28.
@@ -44,13 +44,13 @@ public class AlarmReceiver extends BroadcastReceiver {
 
             // 선택한 요일일 경우에만 알람이 울림
             if (allDayOfWeek.contains(todaysDayOfWeek)) {
-                Log.d("Debug", "alarm alarm!!");
+                Log.d("Debug", "반복 alarm alarm!!");
                 startAlarmActivity(context, cv);
             }
         }
         // 1회일 경우
         else {
-            Log.d("Debug", "alarm alarm!!");
+            Log.d("Debug", "1회 alarm alarm!!");
             startAlarmActivity(context, cv);
         }
     }

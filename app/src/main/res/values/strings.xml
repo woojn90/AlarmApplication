@@ -44,6 +44,7 @@
 
     <string name="msg_valid_way">알람 방식을 1가지 이상 선택하세요.</string>
     <string name="msg_valid_week_day">알람을 반복할 요일을 1가지 이상 선택하세요.</string>
+    <string name="msg_valid_past">1회 알람은 현재보다 과거로 설정할 수 없습니다.</string>
 
 
     <!-- AlertDialog -->

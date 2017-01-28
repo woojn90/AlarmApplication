@@ -8,12 +8,15 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import com.example.android.alarmapplication.data.AlarmContract;
 
-import static com.example.android.alarmapplication.Util.AlarmUtility.getTimeFromHourMinute;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+import static com.example.android.alarmapplication.util.AlarmUtility.getTimeFromHourMinute;
 
 /**
  * Created by wjn on 2017-01-28.
@@ -21,9 +24,10 @@ import static com.example.android.alarmapplication.Util.AlarmUtility.getTimeFrom
 
 public class AlarmActivity extends AppCompatActivity {
 
-    private TextView memoTextView;
-    private TextView timeTextView;
-    private Button cancelButton;
+    @BindView(R.id.tv_memo_alarm)
+    TextView memoTextView;
+    @BindView(R.id.tv_time_alarm)
+    TextView timeTextView;
 
     private Runnable mRunnable;
     private Handler mHandler;
@@ -35,17 +39,7 @@ public class AlarmActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm);
-
-        memoTextView = (TextView) findViewById(R.id.tv_memo_alarm);
-        timeTextView = (TextView) findViewById(R.id.tv_time_alarm);
-        cancelButton = (Button) findViewById(R.id.btn_cancel_alarm);
-
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finishAlarm();
-            }
-        });
+        ButterKnife.bind(this);
 
         ContentValues cv = (ContentValues) getIntent().getExtras().get("ContentValue");
 
@@ -73,6 +67,11 @@ public class AlarmActivity extends AppCompatActivity {
         mHandler.postDelayed(mRunnable, 60 * 1000);
     }
 
+    @OnClick(R.id.btn_cancel_alarm)
+    public void onClick(View v) {
+        finishAlarm();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -93,7 +92,7 @@ public class AlarmActivity extends AppCompatActivity {
         // 진동
         if ("Y".equals(vibrateYn)) {
             vibe = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-            long[] pattern = {0, 2000, 500};
+            long[] pattern = {0, 3000, 500};
             vibe.vibrate(pattern, 1); // 진동 2000, 쉼 500 무한 반복
         }
     }

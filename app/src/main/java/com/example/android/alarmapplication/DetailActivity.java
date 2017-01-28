@@ -10,9 +10,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TabHost;
 import android.widget.TextView;
@@ -24,7 +21,12 @@ import com.example.android.alarmapplication.data.AlarmContract;
 
 import java.util.Calendar;
 
-import static com.example.android.alarmapplication.Util.AlarmUtility.*;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+import static com.example.android.alarmapplication.util.AlarmUtility.getDateFromYearMonthDay;
+import static com.example.android.alarmapplication.util.AlarmUtility.getWeekDayFromDate;
 
 /**
  * Created by wjn on 2017-01-27.
@@ -42,31 +44,44 @@ public class DetailActivity extends AppCompatActivity {
     private long id;
 
     private ContentValues mContentValues;
-    private TabHost tabHost;
 
-    private TimePicker timePicker;
-    private TextView memoEditText;
-    private SeekBar volumeSeekBar;
-    private ToggleButton soundToggleButton;
-    private ToggleButton vibrateToggleButton;
-    private ToggleButton sunToggleButton;
-    private ToggleButton monToggleButton;
-    private ToggleButton tueToggleButton;
-    private ToggleButton wedToggleButton;
-    private ToggleButton thdToggleButton;
-    private ToggleButton friToggleButton;
-    private ToggleButton satToggleButton;
-    private ImageButton calendarImageButton;
-    private TextView dateTextView;
-    private Button saveButton;
 
-    private Button cancelButton;
+    @BindView(android.R.id.tabhost)
+    TabHost tabHost;
+    @BindView(R.id.tp_detail_time)
+    TimePicker timePicker;
+    @BindView(R.id.et_detail_memo)
+    TextView memoEditText;
+    @BindView(R.id.sb_volume)
+    SeekBar volumeSeekBar;
+    @BindView(R.id.tb_sound)
+    ToggleButton soundToggleButton;
+    @BindView(R.id.tb_vibrate)
+    ToggleButton vibrateToggleButton;
+    @BindView(R.id.tb_day_sun)
+    ToggleButton sunToggleButton;
+    @BindView(R.id.tb_day_mon)
+    ToggleButton monToggleButton;
+    @BindView(R.id.tb_day_tue)
+    ToggleButton tueToggleButton;
+    @BindView(R.id.tb_day_wed)
+    ToggleButton wedToggleButton;
+    @BindView(R.id.tb_day_thd)
+    ToggleButton thdToggleButton;
+    @BindView(R.id.tb_day_fri)
+    ToggleButton friToggleButton;
+    @BindView(R.id.tb_day_sat)
+    ToggleButton satToggleButton;
+    @BindView(R.id.tv_date)
+    TextView dateTextView;
+
     private Toast mToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+        ButterKnife.bind(this);
 
         // ActionBar 설정
         ActionBar actionBar = getSupportActionBar();
@@ -75,34 +90,14 @@ public class DetailActivity extends AppCompatActivity {
         }
 
         // Tab 설정
-        tabHost = (TabHost) findViewById(android.R.id.tabhost);
         tabHost.setup();
 
         TabHost.TabSpec spec1 = tabHost.newTabSpec("Tab1").setContent(R.id.tab_repeat)
                 .setIndicator(getString(R.string.string_repeat_Y));
         tabHost.addTab(spec1);
-
         TabHost.TabSpec spec2 = tabHost.newTabSpec("Tab2").setContent(R.id.tab_once)
                 .setIndicator(getString(R.string.string_repeat_N));
         tabHost.addTab(spec2);
-
-        // View 설정
-        timePicker =  (TimePicker) findViewById(R.id.tp_detail_time);
-        memoEditText = (EditText) findViewById(R.id.et_detail_memo);
-        volumeSeekBar = (SeekBar) findViewById(R.id.sb_volume);
-        soundToggleButton = (ToggleButton) findViewById(R.id.tb_sound);
-        vibrateToggleButton = (ToggleButton) findViewById(R.id.tb_vibrate);
-        sunToggleButton = (ToggleButton) findViewById(R.id.tb_day_sun);
-        monToggleButton = (ToggleButton) findViewById(R.id.tb_day_mon);
-        tueToggleButton = (ToggleButton) findViewById(R.id.tb_day_tue);
-        wedToggleButton = (ToggleButton) findViewById(R.id.tb_day_wed);
-        thdToggleButton = (ToggleButton) findViewById(R.id.tb_day_thd);
-        friToggleButton = (ToggleButton) findViewById(R.id.tb_day_fri);
-        satToggleButton = (ToggleButton) findViewById(R.id.tb_day_sat);
-        calendarImageButton = (ImageButton) findViewById(R.id.ib_calendar);
-        dateTextView = (TextView) findViewById(R.id.tv_date);
-        saveButton = (Button) findViewById(R.id.btn_save);
-        cancelButton = (Button) findViewById(R.id.btn_cancel);
 
 
         id = getIntent().getLongExtra("id", 0);
@@ -122,18 +117,16 @@ public class DetailActivity extends AppCompatActivity {
             mContentValues = (ContentValues) getIntent().getExtras().get("ContentValue");
             initializeUpdateAlarm();
         }
+    }
 
-        calendarImageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+    @OnClick({R.id.ib_calendar, R.id.btn_save, R.id.btn_cancel})
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.ib_calendar:
                 Intent popupIntent = new Intent(DetailActivity.this, PopupActivity.class);
                 startActivityForResult(popupIntent, ACTIVITY_POPUP_REQUEST_CODE);
-            }
-        });
-
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+                break;
+            case R.id.btn_save:
                 if (validateData()) {
                     new AlertDialog.Builder(DetailActivity.this)
                             .setTitle(R.string.string_info)
@@ -157,15 +150,11 @@ public class DetailActivity extends AppCompatActivity {
                                 }
                             }).show();
                 }
-            }
-        });
-
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+            break;
+            case R.id.btn_cancel:
                 finish();
-            }
-        });
+            break;
+        }
     }
 
     @Override
@@ -274,18 +263,37 @@ public class DetailActivity extends AppCompatActivity {
         }
         // 1회일 경우
         else {
-            // TODO 현재보다 이후 인지 확인 (time, date 전부 고려)
-            if (dateTextView.getTag() == null) {
-                return false;
+            Calendar selectedCalendar = Calendar.getInstance();
+
+            int hour;
+            int minute;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                hour = timePicker.getHour();
+                minute = timePicker.getMinute();
+            } else {
+                hour = timePicker.getCurrentHour();
+                minute = timePicker.getCurrentMinute();
             }
 
-        }
+            String[] dates = dateTextView.getTag().toString().split("/");
+            int year = Integer.parseInt(dates[0]);
+            int month = Integer.parseInt(dates[1]) - 1;
+            int day = Integer.parseInt(dates[2]);
 
+            selectedCalendar.set(year, month, day, hour, minute, 0);
+
+            // 현재보다 과거인지 확인 (time, date 전부 고려)
+            if (selectedCalendar.getTimeInMillis() < System.currentTimeMillis()) {
+                makeToastMsg(getString(R.string.msg_valid_past));
+                return false;
+            }
+        }
         return true;
     }
 
     private void save() {
-        // setHour, setMinute은 API 23 Level 이상부터 가능
+        // getHour, getMinute은 API 23 Level 이상부터 가능
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mContentValues.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_HOUR, timePicker.getHour());
             mContentValues.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_MINUTE, timePicker.getMinute());

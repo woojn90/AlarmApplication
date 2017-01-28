@@ -7,4 +7,12 @@
     android:padding="16dp"
     tools:context=".SettingActivity">
 
+    <TextView
+        android:id="@+id/tv_alarm_empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textSize="20sp"
+        android:text="개발 예정" />
+
 </RelativeLayout>
