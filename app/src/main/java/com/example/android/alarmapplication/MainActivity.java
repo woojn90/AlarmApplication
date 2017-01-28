@@ -3,6 +3,7 @@ package com.example.android.alarmapplication;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -23,12 +24,16 @@ import com.example.android.alarmapplication.data.AlarmDbHelper;
 public class MainActivity extends AppCompatActivity
         implements AlarmListAdapter.ItemClickListener {
 
+    private static final int ACTIVITY_INSERT_REQUEST_CODE = 0;
+    private static final int ACTIVITY_UPDATE_REQUEST_CODE = 1;
+
     private AlarmListAdapter mAdapter;
-    private static SQLiteDatabase mDb;
+    private SQLiteDatabase mDb;
 
     //TODO ButterKnife Library 적용
     private TextView emptyTextView;
     private RecyclerView alarmRecyclerView;
+
     private Toast mToast;
 
     @Override
@@ -36,10 +41,12 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // View 설정
         emptyTextView = (TextView) findViewById(R.id.tv_alarm_empty);
         alarmRecyclerView = (RecyclerView) findViewById(R.id.rv_alarm_list);
         alarmRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        // DB 설정
         AlarmDbHelper dbHelper = new AlarmDbHelper(this);
         mDb = dbHelper.getWritableDatabase();
 
@@ -47,41 +54,13 @@ public class MainActivity extends AppCompatActivity
         mAdapter = new AlarmListAdapter(this, cursor, this);
         alarmRecyclerView.setAdapter(mAdapter);
 
-        // add Alarm
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_add);
+        // insert Alarm
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_insert);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                //TODO fake data 삭제
-//                ContentValues cv = new ContentValues();
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_HOUR, 8);
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_MINUTE, 27);
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_REPEAT_YN, "Y");
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_DAY_OF_WEEK, "1,3,6");
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_DATE, "");
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_MEMO, "모닝콜!! 일어낫");
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_SOUND_YN, "Y");
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_VIBRATE_YN, "N");
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_SOUND_VOLUME, 50);
-//                ContentValues cv2 = new ContentValues();
-//                cv2.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_HOUR, 22);
-//                cv2.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_MINUTE, 13);
-//                cv2.put(AlarmContract.AlarmEntity.COLUMN_REPEAT_YN, "N");
-//                cv2.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_DAY_OF_WEEK, "");
-//                cv2.put(AlarmContract.AlarmEntity.COLUMN_SELECTED_DATE, "20170125");
-//                cv2.put(AlarmContract.AlarmEntity.COLUMN_MEMO, "치과를 가야함");
-//                cv2.put(AlarmContract.AlarmEntity.COLUMN_SOUND_YN, "Y");
-//                cv2.put(AlarmContract.AlarmEntity.COLUMN_VIBRATE_YN, "Y");
-//                cv2.put(AlarmContract.AlarmEntity.COLUMN_SOUND_VOLUME, 44);
-//                cv.put(AlarmContract.AlarmEntity.COLUMN_ENABLE_YN, "N");
-//                mDb.insert(AlarmContract.AlarmEntity.TABLE_NAME, null, cv);
-//                mDb.insert(AlarmContract.AlarmEntity.TABLE_NAME, null, cv2);
-//
-//                mAdapter.swapCursor(getAllAlarms());
-
-                Intent addIntent = new Intent(MainActivity.this, DetailActivity.class);
-                startActivity(addIntent);
+                Intent insertIntent = new Intent(MainActivity.this, DetailActivity.class);
+                startActivityForResult(insertIntent, ACTIVITY_INSERT_REQUEST_CODE);
             }
         });
     }
@@ -128,13 +107,14 @@ public class MainActivity extends AppCompatActivity
             case -1:
                 Intent updateIntent = new Intent(MainActivity.this, DetailActivity.class);
                 updateIntent.putExtra("id", id);
-                startActivity(updateIntent);
+                updateIntent.putExtra("ContentValue", getContentValuesById(id));
+                startActivityForResult(updateIntent, ACTIVITY_UPDATE_REQUEST_CODE);
                 break;
 
             case R.id.ib_delete:
                 //TODO 삭제 alert 추가
                 mDb.delete(AlarmContract.AlarmEntity.TABLE_NAME, AlarmContract.AlarmEntity._ID + "=" + id, null);
-                makeToastMsg(getString(R.string.msg_alarm_deleted));
+                makeToastMsg(getString(R.string.msg_alarm_delete));
                 break;
 
             case R.id.iv_alarm_on:
@@ -157,6 +137,32 @@ public class MainActivity extends AppCompatActivity
         mAdapter.swapCursor(getAllAlarms());
     }
 
+    // 상세 화면에서 변경된 내용 DB 저장
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // cancel 일 경우 적용 안되게
+        if (data != null) {
+            long id = data.getLongExtra("id", 0);
+            ContentValues cv = (ContentValues) data.getExtras().get("ContentValue");
+            Log.d("Debug", "MainActivity : id = " + id);
+            Log.d("Debug", "MainActivity : requestCode = " + requestCode);
+
+            switch (requestCode) {
+                case ACTIVITY_INSERT_REQUEST_CODE:
+                    mDb.insert(AlarmContract.AlarmEntity.TABLE_NAME, null, cv);
+                    makeToastMsg(getString(R.string.msg_alarm_insert));
+                    break;
+                case ACTIVITY_UPDATE_REQUEST_CODE:
+                    mDb.update(
+                            AlarmContract.AlarmEntity.TABLE_NAME, cv, AlarmContract.AlarmEntity._ID + "=" + id, null);
+                    makeToastMsg(getString(R.string.msg_alarm_update));
+                    break;
+            }
+            // 변경 내용 UI 적용
+            mAdapter.swapCursor(getAllAlarms());
+        }
+    }
+
     // Toast 메세지 출력 (mToast 이용 null 체크)
     private void makeToastMsg(String msg) {
         if (mToast != null) {
@@ -165,4 +171,20 @@ public class MainActivity extends AppCompatActivity
         mToast = Toast.makeText(this, msg, Toast.LENGTH_LONG);
         mToast.show();
     }
+
+    // id로 1개 row(data) 선택 후 ContentValues 로 return
+    private ContentValues getContentValuesById(long id) {
+        Cursor cursorRow = mDb.query(
+                AlarmContract.AlarmEntity.TABLE_NAME, null,
+                AlarmContract.AlarmEntity._ID + "=" + id, null, null, null, null);
+
+        ContentValues cv = null;
+        if (cursorRow.moveToFirst()) {
+            cv = new ContentValues();
+            DatabaseUtils.cursorRowToContentValues(cursorRow, cv);
+        }
+        return cv;
+    }
+
+
 }

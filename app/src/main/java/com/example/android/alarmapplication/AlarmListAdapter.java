@@ -11,6 +11,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.android.alarmapplication.Util.AlarmUtility;
 import com.example.android.alarmapplication.data.AlarmContract;
 
 /**
@@ -53,7 +54,6 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
         String memo = mCursor.getString(mCursor.getColumnIndex(AlarmContract.AlarmEntity.COLUMN_MEMO));
         String soundYn = mCursor.getString(mCursor.getColumnIndex(AlarmContract.AlarmEntity.COLUMN_SOUND_YN));
         String vibrateYn = mCursor.getString(mCursor.getColumnIndex(AlarmContract.AlarmEntity.COLUMN_VIBRATE_YN));
-        int soundVolume = mCursor.getInt(mCursor.getColumnIndex(AlarmContract.AlarmEntity.COLUMN_SOUND_VOLUME));
         String enableYn = mCursor.getString(mCursor.getColumnIndex(AlarmContract.AlarmEntity.COLUMN_ENABLE_YN));
 
         long id = mCursor.getLong(mCursor.getColumnIndex(AlarmContract.AlarmEntity._ID));
@@ -70,7 +70,7 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
 
         // 반복 여부
         if ("Y".equals(repeatYn)) {
-            holder.repeatTextView.setText(mContext.getString(R.string.repeat_Y));
+            holder.repeatTextView.setText(mContext.getString(R.string.string_repeat_Y));
             holder.repeatDetailTextView.setText(dayOfWeek
                     .replace("1","일")
                     .replace("2","월")
@@ -81,12 +81,13 @@ public class AlarmListAdapter extends RecyclerView.Adapter<AlarmListAdapter.Alar
                     .replace("7","토"));
 
         } else {
-            holder.repeatTextView.setText(mContext.getString(R.string.repeat_N));
-            holder.repeatDetailTextView.setText(date);
+            holder.repeatTextView.setText(mContext.getString(R.string.string_repeat_N));
+            holder.repeatDetailTextView.setText(date + AlarmUtility.getWeekDayFromDate(date));
         }
 
         String meridian = hour >= 12 ? "AM" : "PM";
-        holder.timeTextView.setText(meridian + " " + hour + ":" + minute);
+        holder.timeTextView.setText(meridian + " " + String.format("%02d", hour)
+                + ":" + String.format("%02d",minute));
         holder.memoTextView.setText(memo);
     }
 

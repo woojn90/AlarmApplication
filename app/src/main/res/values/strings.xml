@@ -1,22 +1,33 @@
 <resources>
-    <string name="app_name">AlarmApplication</string>
+    <string name="app_name">Alarm</string>
 
     <string name="action_main">알람</string>
-    <string name="action_detail_add">알람 추가</string>
+    <string name="action_detail_insert">알람 추가</string>
     <string name="action_detail_update">알람 수정</string>
-
-    <string name="repeat_Y">반복</string>
-    <string name="repeat_N">1회</string>
-
-    <string name="msg_add_new_alarm">새로운 알람을 추가하세요!</string>
-
-    <string name="msg_alarm_on">선택한 알람이 활성화 됩니다.</string>
-    <string name="msg_alarm_off">선택한 알람이 비활성화 됩니다.</string>
-    <string name="msg_alarm_deleted">선택한 알람이 삭제되었습니다.</string>
-
     <string name="action_setting">설정</string>
 
+    <string name="string_repeat_Y">반복</string>
+    <string name="string_repeat_N">1회</string>
+    <string name="string_detail_memo">메모</string>
+    <string name="string_detail_volume">음량</string>
+    <string name="string_detail_way">방식</string>
+    <string name="string_detail_sound">소리</string>
+    <string name="string_detail_vibrate">진동</string>
+    <string name="string_detail_day_of_week">요일 선택</string>
+    <string name="string_detail_date">날짜 선택</string>
+    <string name="string_detail_save">저장</string>
+    <string name="string_detail_cancel">취소</string>
 
+    <string name="msg_add_new_alarm">새로운 알람을 추가하세요!</string>
+    <string name="msg_alarm_on">선택한 알람이 활성화 됩니다.</string>
+    <string name="msg_alarm_off">선택한 알람이 비활성화 됩니다.</string>
+
+    <string name="msg_alarm_delete">선택한 알람이 삭제되었습니다.</string>
+    <string name="msg_alarm_insert">새로운 알람이 추가되었습니다.</string>
+    <string name="msg_alarm_update">수정한 내용으로 변경되었습니다.</string>
+
+    <string name="msg_valid_way">알람 방식을 1가지 이상 선택하세요.</string>
+    <string name="msg_valid_week_day">알람을 반복할 요일을 1가지 이상 선택하세요.</string>
 
 
 </resources>
